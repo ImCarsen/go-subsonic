@@ -1,5 +1,5 @@
-module github.com/dweymouth/go-subsonic
+module github.com/imcarsen/go-subsonic
 
-go 1.13
+go 1.22
 
 require golang.org/x/image v0.13.0

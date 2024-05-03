@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"image"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -16,6 +15,35 @@ import (
 
 	_ "golang.org/x/image/webp"
 )
+
+// SeekableReader is an io.Reader and io.Seeker implementation that wraps an io.ReadCloser
+type SeekableReader struct {
+	reader io.ReadCloser
+	buffer *strings.Reader
+}
+
+// NewSeekableReader creates a new SeekableReader
+func NewSeekableReader(reader io.ReadCloser) (*SeekableReader, error) {
+	defer reader.Close()
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	return &SeekableReader{
+		reader: reader,
+		buffer: strings.NewReader(string(data)),
+	}, nil
+}
+
+// Read reads data from the SeekableReader
+func (sr *SeekableReader) Read(p []byte) (n int, err error) {
+	return sr.buffer.Read(p)
+}
+
+// Seek seeks to the specified offset
+func (sr *SeekableReader) Seek(offset int64, whence int) (int64, error) {
+	return sr.buffer.Seek(offset, whence)
+}
 
 // Stream returns the contents of a song, optionally transcoded, from the server.
 // If a nil error is returned, the caller is responsable for closing the Reader.
@@ -42,7 +70,7 @@ func (s *Client) Stream(id string, parameters map[string]string) (io.Reader, err
 	if strings.HasPrefix(contentType, "text/xml") || strings.HasPrefix(contentType, "application/xml") {
 		// An error was returned
 		defer response.Body.Close()
-		responseBody, err := ioutil.ReadAll(response.Body)
+		responseBody, err := io.ReadAll(response.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -58,7 +86,13 @@ func (s *Client) Stream(id string, parameters map[string]string) (io.Reader, err
 		}
 		return nil, err
 	}
-	return response.Body, nil
+	// Wrap the response body in a SeekableReader
+	seekableReader, err := NewSeekableReader(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return seekableReader, nil
 }
 
 // GetStreamURL returns the URL for streaming the specified media. Similar to Stream,
@@ -98,7 +132,7 @@ func (s *Client) Download(id string) (io.Reader, error) {
 	if strings.HasPrefix(contentType, "text/xml") || strings.HasPrefix(contentType, "application/xml") {
 		// An error was returned
 		defer response.Body.Close()
-		responseBody, err := ioutil.ReadAll(response.Body)
+		responseBody, err := io.ReadAll(response.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -114,7 +148,13 @@ func (s *Client) Download(id string) (io.Reader, error) {
 		}
 		return nil, err
 	}
-	return response.Body, nil
+	// Wrap the response body in a SeekableReader
+	seekableReader, err := NewSeekableReader(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return seekableReader, nil
 }
 
 // Sends a download request and returns the raw http.Response with
@@ -144,7 +184,7 @@ func (s *Client) GetCoverArt(id string, parameters map[string]string) (image.Ima
 	contentType := response.Header.Get("Content-Type")
 	if strings.HasPrefix(contentType, "text/xml") || strings.HasPrefix(contentType, "application/xml") {
 		// An error was returned
-		responseBody, err := ioutil.ReadAll(response.Body)
+		responseBody, err := io.ReadAll(response.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -179,7 +219,7 @@ func (s *Client) GetAvatar(username string) (image.Image, error) {
 	contentType := response.Header.Get("Content-Type")
 	if strings.HasPrefix(contentType, "text/xml") || strings.HasPrefix(contentType, "application/xml") {
 		// An error was returned
-		responseBody, err := ioutil.ReadAll(response.Body)
+		responseBody, err := io.ReadAll(response.Body)
 		if err != nil {
 			return nil, err
 		}
