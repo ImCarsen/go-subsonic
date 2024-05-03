@@ -3,7 +3,8 @@
 > This is an API client library for Subsonic and Subsonic-compatible music servers. It is tested on Subsonic, Airsonic, and Navidrome. <br/>
 This is a slightly modified version of [dweymouth/go-subsonic](https://github.com/dweymouth/go-subsonic)
 
-[![GoDoc](https://godoc.org/github.com/delucks/go-subsonic?status.svg)](https://godoc.org/github.com/delucks/go-subsonic)
+[![Go Reference](https://godoc.org/github.com/imcarsen/go-subsonic?status.svg)](https://pkg.go.dev/github.com/imcarsen/go-subsonic) <br/>
+[Docs](https://godoc.org/github.com/delucks/go-subsonic)
 
 ## Changes and reasoning
 The Stream and Download functions did not support seeking.
