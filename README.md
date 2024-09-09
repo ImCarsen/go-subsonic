@@ -10,7 +10,7 @@ This is a slightly modified version of [dweymouth/go-subsonic](https://github.co
 The Stream and Download functions did not support seeking.
 
 Changes made:
-- Added SeekableReader, which implements io.Reader and io.Seeker interfaces
+- Added SeekableReader, which implements io.Reader, io.Closer and io.Seeker interfaces
 - Made the Stream and Download functions use SeekableReader
 - Update to Go version 1.22
 
